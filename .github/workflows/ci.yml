@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: so101-rl
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: so101-rl
+
+      # pyproject.toml installs so101-core from ../so101-core, so it must be checked out next to this repo.
+      # so101-core is public; if it ever becomes private, add `token:` with a PAT that can read it.
+      - uses: actions/checkout@v4
+        with:
+          repository: B-ramB/so101-core
+          path: so101-core
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: so101-rl/uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      # The sync below only downloads changed files, so a restored cache makes it fast and still up to date.
+      - uses: actions/cache@v4
+        with:
+          path: so101-rl/so101_config/urdf
+          key: so101-urdfs-v1
+
+      - name: Fetch URDFs
+        run: uv run so101-fetch-urdfs
+
+      - name: Lint
+        run: uv run ruff check
+
+      # A -m on the command line replaces the -m 'not hardware' in addopts, so hardware is excluded here too.
+      - name: Test
+        run: uv run pytest -m "not slow and not hardware"

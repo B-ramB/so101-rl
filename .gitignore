@@ -221,3 +221,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Training runs: checkpoints and TensorBoard logs
+runs/
