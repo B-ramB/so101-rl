@@ -1,0 +1,43 @@
+[project]
+name = "so101-rl"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "gymnasium>=1.1",
+    "so101-core[sim]",
+    "stable-baselines3>=2.7",
+    "tensorboard>=2.21.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/so101_rl"]
+
+[tool.uv]
+# so101-core's SafeFollower was checked against lerobot 0.6.1 (so101-core docs/safety.md), and Isaac Lab 3.0 needs
+# torch 2.11. Without this pin uv resolves lerobot 0.7.0 + torch 2.15.
+constraint-dependencies = ["lerobot>=0.6.1,<0.7"]
+
+[tool.uv.sources]
+so101-core = { path = "../so101-core", editable = true }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-m 'not hardware'"
+markers = [
+    "sim: needs the URDFs in so101_config/urdf (skipped otherwise)",
+    "slow: trains a policy (CI runs -m 'not slow and not hardware')",
+    "hardware: needs the real arms (deselected by default; run with -m hardware)",
+]
+
+[tool.ruff]
+line-length = 120
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "ruff>=0.17.5",
+]
