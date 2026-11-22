@@ -26,6 +26,22 @@ lerobot is pinned to `>=0.6.1,<0.7` (`[tool.uv] constraint-dependencies`), the r
 
 Training output goes to `runs/` (git-ignored).
 
+## Envs
+
+| Env | Task |
+|---|---|
+| `So101Reach-v0` | Move the gripper tip to a goal point with the five arm joints ([docs/reach.md](docs/reach.md)) |
+
+```python
+import gymnasium as gym
+
+env = gym.make("so101_rl.envs:So101Reach-v0")   # render_mode="human" opens the MuJoCo viewer
+```
+
+The observation and action come from joint positions only, so a trained policy runs on the real arm too. The env keeps
+the arm inside the workspace from `so101_config/safety.json` (above the table), with the same rule as so101-core's
+`SafeFollower`.
+
 ## Development
 
 ```bash
