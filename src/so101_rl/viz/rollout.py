@@ -11,7 +11,7 @@ from dataclasses import dataclass
 import gymnasium as gym
 import numpy as np
 import rerun as rr
-from so101.conventions import GRIPPER
+from so101.conventions import GRIPPER, GRIPPER_LOWER, GRIPPER_UPPER, rescale_gripper
 from so101.paths import FOLLOWER_URDF
 from so101.viz.rerun_arm import ArmModel
 from stable_baselines3.common.callbacks import BaseCallback
@@ -97,9 +97,8 @@ class RolloutRecorder:
 
     def frame(self, obs: np.ndarray, info: dict, action: np.ndarray | None = None, reward: float | None = None) -> None:
         """One step: the arm from the measured joints in `obs`, the tip from its FK (as the policy sees them)."""
-        with active(self.rec):
-            joints = {joint: float(value) for joint, value in zip(ARM_JOINTS, obs[Q], strict=True)}
-            self.model.log_positions(joints | {GRIPPER: self._gripper})
+        joints = {joint: float(value) for joint, value in zip(ARM_JOINTS, obs[Q], strict=True)}
+        self._log_joints(joints | {GRIPPER: self._gripper})
         tip = np.asarray(obs[EE], dtype=np.float64) + self.offset
         self._trail.append(tip)
         tip_color = rgb(GOOD) if info.get("is_success") else self.color
@@ -114,6 +113,19 @@ class RolloutRecorder:
             if action is not None:
                 for joint, value in zip(ARM_JOINTS, np.asarray(action).reshape(-1), strict=True):
                     self.rec.log(f"{self.plots}/action/{joint}", rr.Scalars(float(value)))
+
+    def _log_joints(self, positions: dict[str, float]) -> None:
+        """`ArmModel.log_positions`, but through `self.rec` instead of the active recording.
+
+        Making a recording active swaps the thread-local recording, and every swap flushes Rerun's batcher: doing that
+        each frame wrote one chunk per entity per frame, about twice the file size.
+        """
+        for joint, value in positions.items():
+            if joint == GRIPPER:
+                value = rescale_gripper(value, (GRIPPER_LOWER, GRIPPER_UPPER), self.model.gripper_limits)
+            if joint in self.model.joints:
+                transform = self.model.joints[joint].compute_transform(value)
+                self.rec.log(f"{self.arm}/joint_transforms/{joint}", transform)
 
     def end(self, info: dict) -> str:
         """The episode's last step: logs and returns a one-line summary."""

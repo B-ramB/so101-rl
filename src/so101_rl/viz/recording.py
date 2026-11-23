@@ -75,7 +75,8 @@ def close(rec: rr.RecordingStream) -> None:
 def active(rec: rr.RecordingStream) -> Iterator[None]:
     """Make `rec` this thread's recording, for code that logs through `rr.log` (so101-core's `ArmModel`).
 
-    Unlike `with rec:`, this does not flush or finalize the file sink on exit.
+    Unlike `with rec:`, this does not finalize the file sink on exit. Use it for one-off setup only: every swap of the
+    thread-local recording flushes Rerun's batcher, so per-frame use writes one chunk per entity per frame.
     """
     previous = rr.set_thread_local_data_recording(rec)
     try:

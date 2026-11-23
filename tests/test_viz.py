@@ -182,6 +182,9 @@ def test_rollout_recorder_logs_every_frame(urdf, tmp_path):
 
     frames = env.max_steps + 1  # the reset, then every step
     assert next_frame == 10 + frames
+    # Rerun batches the rows of an entity into a few chunks; one chunk per frame (a flush every frame) doubled the files.
+    joint_chunks = [c for c in rr.chunk.RrdReader(path).stream().to_chunks() if c.entity_path.endswith("/shoulder_pan")]
+    assert len(joint_chunks) < frames // 4
     assert info["distance"] > 0
     entities = read(path)
     rows, timelines = entities["/rollout/joint_transforms/shoulder_pan"]

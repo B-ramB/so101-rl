@@ -15,7 +15,8 @@ run live, start it with `--view`: opening the file of a running run shows a snap
 
 ## One run
 
-`runs/<name>/rerun.rrd` is written while training runs (about 25 MB, mostly the arm's meshes). Its tabs:
+`runs/<name>/rerun.rrd` is written while training runs: about 20 MB for the arm's meshes plus 0.4 MB per evaluation
+(23 MB for 60k steps, 32 MB for 300k at the default `--eval-every`). Its tabs:
 
 | Tab | Timeline | What it shows |
 |---|---|---|
@@ -46,7 +47,8 @@ uv run so101-rl-compare runs/reach-s0 runs/reach-s1 runs/reach-cost05
 - **Race** (`rollout_frame`): each run's best policy (`--final`: the last one) on the same seeded goals, arms side by
   side, in lockstep. `--episodes N` sets the number of goals (default 3, 0 for no race).
 - **Run**: a table with one row per run, giving algorithm, seed, steps, wall time, eval success, the mean race distance,
-  and a column for every setting that differs between the runs (e.g. `env_kwargs.action_cost`).
+  and a column for every setting that differs between the runs (e.g. `env_kwargs.action_cost`; `-` means the run did
+  not set it, so the default applied). The git commits are settings too: runs trained on different code show it.
 
 At most 8 runs at once: each run keeps its own color in every view. `--save compare.rrd` writes a file instead of
 opening the viewer.
