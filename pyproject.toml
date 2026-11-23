@@ -4,6 +4,7 @@ version = "0.1.0"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "gymnasium>=1.1",
+    "rerun-sdk>=0.40",
     "so101-core[sim]",
     "stable-baselines3>=2.7",
     "tensorboard>=2.21.0",
@@ -11,6 +12,7 @@ dependencies = [
 
 [project.scripts]
 so101-rl-train = "so101_rl.cli.train:main"
+so101-rl-compare = "so101_rl.cli.compare:main"
 
 [build-system]
 requires = ["hatchling"]

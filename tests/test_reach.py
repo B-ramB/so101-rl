@@ -234,7 +234,7 @@ def test_episode_truncates_and_never_terminates(env):
         _, reward, terminated, truncated, info = env.step(env.action_space.sample())
         assert not terminated
         assert truncated == (step == env.max_steps)
-        assert set(info) == {"distance", "is_success", "held", "contact"}
+        assert set(info) == {"distance", "is_success", "held", "contact", "reward_terms"}
         assert isinstance(reward, float)
     assert env.max_steps == 120
 
@@ -253,6 +253,10 @@ def test_reward_formula(env):
             - env.contact_cost * info["contact"]
         )
         assert reward == pytest.approx(expected)
+        terms = info["reward_terms"]
+        assert set(terms) == {"distance", "success", "action", "workspace", "contact"}
+        assert sum(terms.values()) == pytest.approx(reward)
+        assert terms["action"] == pytest.approx(-env.action_cost * np.sum(action**2))
         assert info["distance"] == pytest.approx(np.linalg.norm(obs[GOAL_DELTA]), abs=TOL)
         assert info["is_success"] == (info["distance"] < env.success_m)
 

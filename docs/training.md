@@ -6,7 +6,8 @@ everything needed to run it again in `runs/<name>/` (git-ignored).
 ```bash
 uv run so101-rl-train                                    # SAC on So101Reach-v0, 300k steps
 uv run so101-rl-train --steps 60000 --name probe         # a short probe
-uv run tensorboard --logdir runs                         # the curves, http://localhost:6006
+uv run so101-rl-train --view                             # watch it learn in Rerun
+uv run tensorboard --logdir runs                         # the curves in TensorBoard, http://localhost:6006
 ```
 
 Ctrl+C stops training and still saves `model.zip`; `config.json` then has `"interrupted": true`. An existing run
@@ -27,6 +28,8 @@ folder is never overwritten: pick another `--name`.
 | `--device` | `auto` | torch device: `auto` (CUDA if available, else CPU), `cpu`, `cuda`, `mps` |
 | `--eval-every` | 10 000 | env steps between evaluations (10 deterministic episodes each) |
 | `--runs-dir` | `runs/` | where run folders go |
+| `--view` | off | open the Rerun viewer and watch the run live ([visualization.md](visualization.md)) |
+| `--no-rerun` | off | don't write `rerun.rrd` |
 
 TD3 gets action noise with sigma 0.1 by default: SB3's TD3 has none, and then barely explores.
 
@@ -44,8 +47,11 @@ runs/<name>/
 ├── progress.csv               every logged metric
 ├── tb/                        TensorBoard events
 ├── eval/evaluations.npz       every evaluation: rewards, lengths, successes
-└── monitor/<rank>.monitor.csv every training episode: reward, length, is_success, final distance
+├── monitor/<rank>.monitor.csv every training episode: reward, length, is_success, final distance
+└── rerun.rrd                  the Rerun recording: curves and fixed-seed rollouts (`uv run rerun runs/<name>/rerun.rrd`)
 ```
+
+To review runs in Rerun (one run, or several compared side by side), see [visualization.md](visualization.md).
 
 `config.json` holds the env id and env kwargs, the algo and algo kwargs, seed, `n_envs`, steps, the eval settings,
 the device, the **safety limits used**, package versions, the git commits of so101-rl and so101-core (`-dirty` with

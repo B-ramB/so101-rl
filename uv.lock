@@ -1418,6 +1418,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "gymnasium" },
+    { name = "rerun-sdk" },
     { name = "so101-core", extra = ["sim"] },
     { name = "stable-baselines3" },
     { name = "tensorboard" },
@@ -1432,6 +1433,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "gymnasium", specifier = ">=1.1" },
+    { name = "rerun-sdk", specifier = ">=0.40" },
     { name = "so101-core", extras = ["sim"], editable = "../so101-core" },
     { name = "stable-baselines3", specifier = ">=2.7" },
     { name = "tensorboard", specifier = ">=2.21.0" },

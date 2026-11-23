@@ -5,7 +5,9 @@ Run with:
     uv run so101-rl-train --steps 60000 --name probe        # a short probe
     uv run so101-rl-train --algo ppo --n-envs 16
     uv run so101-rl-train --seed 1 --env-kwargs '{"action_cost": 0.05}' --algo-kwargs '{"learning_rate": 1e-3}'
-    uv run tensorboard --logdir runs                        # the curves
+    uv run so101-rl-train --view                            # watch it learn in the Rerun viewer
+    uv run rerun runs/<name>/rerun.rrd                      # review a run later (docs/visualization.md)
+    uv run tensorboard --logdir runs                        # the curves in TensorBoard
 
 Ctrl+C stops training and saves the model so far. An existing run folder is never overwritten.
 """
@@ -16,8 +18,10 @@ import sys
 from pathlib import Path
 
 from so101.paths import pretty
+from so101.safety import SafetyLimits
 
 from so101_rl.training import ALGOS, DEFAULT_N_ENVS, RunConfig, default_runs_dir, load_config, train
+from so101_rl.viz.training import RRD_NAME, RerunTraining
 
 
 def json_object(text: str) -> dict:
@@ -71,11 +75,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="env steps between evaluations (default: %(default)s)",
     )
     parser.add_argument("--runs-dir", type=Path, help="where run folders go (default: runs/ in this project)")
+    parser.add_argument("--view", action="store_true", help="open the Rerun viewer and watch the run live")
+    parser.add_argument("--no-rerun", action="store_true", help=f"don't record the run for Rerun ({RRD_NAME})")
     return parser
 
 
 def main(argv: list[str] | None = None) -> None:
     args = build_parser().parse_args(argv)
+    if args.view and args.no_rerun:
+        sys.exit("--view needs the Rerun recording; drop --no-rerun")
     try:
         cfg = RunConfig(
             env=args.env,
@@ -97,10 +105,16 @@ def main(argv: list[str] | None = None) -> None:
         f"-> {pretty(runs_dir / cfg.name)}",
         flush=True,
     )
+    hooks = None
     try:
-        run = train(cfg, runs_dir)
+        limits = SafetyLimits.load()
+        hooks = None if args.no_rerun else RerunTraining(cfg, limits, view=args.view)
+        run = train(cfg, runs_dir, limits=limits, **(hooks.train_kwargs() if hooks else {}))
     except (FileExistsError, ValueError, TypeError) as e:
         sys.exit(str(e))
+    finally:
+        if hooks is not None:
+            hooks.close()
 
     result = load_config(run)["result"]
     stopped = "Interrupted" if result["interrupted"] else "Done"
@@ -109,6 +123,8 @@ def main(argv: list[str] | None = None) -> None:
     if success is not None:
         print(f"Eval success: last {success:.0%}, best {result['best_success_rate']:.0%}.")
     print(f"Saved {pretty(run)}/ (model.zip, best/best_model.zip, config.json).")
+    if hooks is not None:
+        print(f"Review: uv run rerun {pretty(run / RRD_NAME)}")
     print(f"Curves: uv run tensorboard --logdir {pretty(runs_dir)}")
 
 

@@ -8,6 +8,9 @@ and [Gymnasium](https://gymnasium.farama.org).
 |---|---|
 | `uv run so101-fetch-urdfs` | Download or update the SO-101 URDFs and meshes into `so101_config/urdf` |
 | `uv run so101-rl-train` | Train a policy (SAC, TD3 or PPO) on an env into `runs/<name>/` ([docs/training.md](docs/training.md)) |
+| `uv run so101-rl-train --view` | The same, watching the curves and the arm learn live in Rerun ([docs/visualization.md](docs/visualization.md)) |
+| `uv run rerun runs/<name>/rerun.rrd` | Review a run: curves, and the policy reaching the same goals after every evaluation |
+| `uv run so101-rl-compare runs/<a> runs/<b> ...` | Compare runs in Rerun: curves overlaid, a table of what differs, the policies side by side |
 
 ## Install
 
@@ -25,7 +28,8 @@ lerobot is pinned to `>=0.6.1,<0.7` (`[tool.uv] constraint-dependencies`), the r
 `SafeFollower` was checked against. That also keeps torch at 2.11.
 
 Training output goes to `runs/` (git-ignored): one folder per run with the model, the best model, the config and
-the curves. See [docs/training.md](docs/training.md).
+the curves, including a Rerun recording. See [docs/training.md](docs/training.md) and
+[docs/visualization.md](docs/visualization.md).
 
 ## Envs
 

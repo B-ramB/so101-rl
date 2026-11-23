@@ -93,7 +93,9 @@ reward = −distance
 ```
 
 `distance` is ‖goal − ee‖ in metres. Episodes are truncated after `episode_s` and never terminated, so the policy
-learns to reach **and hold**. `info` has `distance`, `is_success` (SB3 reads it), `held` and `contact`.
+learns to reach **and hold**. `info` has `distance`, `is_success` (SB3 reads it), `held` and `contact`, and after a
+step `reward_terms`: each term above with its sign (`distance`, `success`, `action`, `workspace`, `contact`), summing
+to the reward. Rerun plots them per step (see [visualization.md](visualization.md)).
 
 The workspace hold always applies: without it the policy could learn moves the real arm's `SafeFollower` would
 stop. The two penalties are configurable: set a cost to 0 to turn it off. The floor contact is a sim-only signal for
