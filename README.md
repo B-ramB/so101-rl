@@ -7,7 +7,7 @@ and [Gymnasium](https://gymnasium.farama.org).
 | Command | What it does |
 |---|---|
 | `uv run so101-fetch-urdfs` | Download or update the SO-101 URDFs and meshes into `so101_config/urdf` |
-| _(added by later issues)_ | |
+| `uv run so101-rl-train` | Train a policy (SAC, TD3 or PPO) on an env into `runs/<name>/` ([docs/training.md](docs/training.md)) |
 
 ## Install
 
@@ -24,7 +24,8 @@ uv run so101-fetch-urdfs    # URDFs + meshes into so101_config/urdf (git-ignored
 lerobot is pinned to `>=0.6.1,<0.7` (`[tool.uv] constraint-dependencies`), the release so101-core is locked to and
 `SafeFollower` was checked against. That also keeps torch at 2.11.
 
-Training output goes to `runs/` (git-ignored).
+Training output goes to `runs/` (git-ignored): one folder per run with the model, the best model, the config and
+the curves. See [docs/training.md](docs/training.md).
 
 ## Envs
 
