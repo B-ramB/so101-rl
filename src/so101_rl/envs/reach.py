@@ -291,7 +291,10 @@ class ReachEnv(gym.Env):
 
     def step(self, action) -> tuple[np.ndarray, float, bool, bool, dict]:
         """reward = -distance + success_bonus·[distance < success_m] - action_cost·‖a‖²
-        - workspace_cost·[step held at the workspace] - contact_cost·[the arm touches the floor]"""
+        - workspace_cost·[step held at the workspace] - contact_cost·[the arm touches the floor]
+
+        `info["reward_terms"]` has each term with its sign; the reward is their sum.
+        """
         action = np.clip(np.asarray(action, dtype=np.float64), -1.0, 1.0)
         self.robot.send_action(self.io.act(action))
         observation = self.io.observe(self.robot.get_observation(), self.goal)
@@ -299,13 +302,14 @@ class ReachEnv(gym.Env):
 
         held, contact = self.io.held, self._touches_floor()
         info = self._info(held, contact)
-        reward = (
-            -info["distance"]
-            + self.success_bonus * info["is_success"]
-            - self.action_cost * float(np.sum(action**2))
-            - self.workspace_cost * held
-            - self.contact_cost * contact
-        )
+        info["reward_terms"] = {
+            "distance": -info["distance"],
+            "success": self.success_bonus * info["is_success"],
+            "action": -self.action_cost * float(np.sum(action**2)),
+            "workspace": -self.workspace_cost * held,
+            "contact": -self.contact_cost * contact,
+        }
+        reward = sum(info["reward_terms"].values())
         if self.render_mode == "human":
             self._pace()
         return observation, float(reward), False, self._steps >= self.max_steps, info
