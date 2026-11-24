@@ -9,6 +9,9 @@ dependencies = [
     "tensorboard>=2.21.0",
 ]
 
+[project.scripts]
+so101-rl-train = "so101_rl.cli.train:main"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
