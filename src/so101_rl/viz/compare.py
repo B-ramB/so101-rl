@@ -244,7 +244,7 @@ def compare(
     arms = [f"race_{i}" for i in range(len(runs))] if seeds else []
     rec = new_recording("compare: " + ", ".join(run.name for run in runs))
     if view:
-        spawn_viewer()
+        spawn_viewer(rec)
     connect(rec, rrd, view, blueprint({run.config["algo"] for run in runs}, rollouts=False, race_arms=arms))
     try:
         for run in runs:

@@ -6,6 +6,8 @@ The sim tests need the URDFs (skipped otherwise); the slow test trains two tiny 
 import collections
 import csv
 import json
+import socket
+import time
 
 import numpy as np
 import pytest
@@ -26,6 +28,7 @@ from so101_rl.viz.recording import (
     entity_name,
     new_recording,
     run_color,
+    spawn_viewer,
 )
 from so101_rl.viz.rollout import Player, RolloutRecorder, play
 from so101_rl.viz.training import RRD_NAME, RerunTraining, run_markdown
@@ -296,3 +299,29 @@ def test_run_markdown_shows_the_result():
     }
     page = run_markdown(config)
     assert "1,000 (interrupted)" in page and "1.5 min" in page and json.dumps({"joint_limits": {}}, indent=2) in page
+
+
+def test_spawn_viewer_starts_the_viewer_without_rr_init(monkeypatch):
+    """rr.spawn() without rr.init() skips the spawn ("Rerun is disabled"): spawn_viewer must go through the recording."""
+    spawned = []
+    monkeypatch.setattr(rr.sinks, "_spawn_viewer", lambda **kwargs: spawned.append(kwargs))
+    spawn_viewer(new_recording("run-a"))
+    assert len(spawned) == 1
+
+
+def test_close_finishes_the_file_when_the_viewer_is_unreachable(tmp_path, capsys):
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]  # nothing listens here: like a viewer that was closed
+    path = tmp_path / "run.rrd"
+    rec = new_recording("run-a")
+    rec.set_sinks(rr.GrpcSink(url=f"rerun+http://127.0.0.1:{port}/proxy"), rr.FileSink(str(path)))
+    for step in range(50):
+        rec.set_time("train_step", sequence=step)
+        rec.log("metrics/x/run-a", rr.Scalars(step))
+
+    start = time.perf_counter()
+    close(rec)  # must not raise
+    assert time.perf_counter() - start < 30
+    assert "viewer not reached" in capsys.readouterr().out
+    assert read(path)["/metrics/x/run-a"][0] == 50

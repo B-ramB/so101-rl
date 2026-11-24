@@ -19,6 +19,7 @@ EPISODE_TIME = "episode_time"
 RUN_COLORS = ("#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767")
 GOOD = "#0ca30c"  # status: success
 CRITICAL = "#d03b3b"  # status: failure
+FLUSH_TIMEOUT_S = 10.0
 GOAL = (230, 51, 51, 90)  # the goal marker of scene_reach.xml (rgba 0.9 0.2 0.2), see-through
 
 
@@ -48,9 +49,13 @@ def new_recording(name: str) -> rr.RecordingStream:
     return rec
 
 
-def spawn_viewer() -> None:
-    """Start the Rerun viewer (or reuse a running one) without connecting a recording yet."""
-    rr.spawn(connect=False)
+def spawn_viewer(rec: rr.RecordingStream) -> None:
+    """Start the Rerun viewer for `rec` (or reuse a running one) without connecting yet: `connect` does that.
+
+    Through the recording: the module-level `rr.spawn()` checks the active recording, and without `rr.init` there is
+    none, so it would skip the spawn ("Rerun is disabled - spawn() call ignored").
+    """
+    rec.spawn(connect=False)
 
 
 def connect(rec: rr.RecordingStream, rrd: Path | None, view: bool, blueprint: rrb.Blueprint) -> None:
@@ -66,8 +71,15 @@ def connect(rec: rr.RecordingStream, rrd: Path | None, view: bool, blueprint: rr
 
 
 def close(rec: rr.RecordingStream) -> None:
-    """Flush everything to the sinks and finish the file."""
-    rec.flush()
+    """Flush everything to the sinks and finish the file.
+
+    When the viewer cannot be reached (it was closed, or never started), the flush fails after a few seconds; the file
+    sink is complete anyway, so that is only reported.
+    """
+    try:
+        rec.flush(timeout_sec=FLUSH_TIMEOUT_S)
+    except RuntimeError as e:
+        print(f"Rerun viewer not reached ({e}); the .rrd file is complete.", flush=True)
     rec.disconnect()
 
 

@@ -122,7 +122,7 @@ class RerunTraining:
     def __init__(self, cfg: RunConfig, limits: SafetyLimits, view: bool = False, seeds: Sequence[int] = ROLLOUT_SEEDS):
         self.rec = new_recording(cfg.name)
         if view:
-            spawn_viewer()
+            spawn_viewer(self.rec)
         color = run_color(0)
         self.output_format = RerunOutputFormat(self.rec, cfg.name, color)
         self.start = StartRecording(self.rec, view, blueprint([cfg.algo]))
